@@ -6,5 +6,5 @@ services:
     user: root
     container_name: barracuda-navigation
     network_mode: host
-    restart: always
+    restart: on-failure
     privileged: true
