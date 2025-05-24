@@ -1,0 +1,10 @@
+services:
+  barracuda-navigation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: root
+    container_name: barracuda-navigation
+    network_mode: host
+    restart: always
+    privileged: true
