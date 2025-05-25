@@ -1,3 +1,6 @@
 [submodule "catkin_ws/src/barracuda_msgs"]
 	path = catkin_ws/src/barracuda_msgs
 	url = git@github.com:usc-robosub/barracuda_msgs.git
+[submodule "catkin_ws/src/rrt_star_planner"]
+	path = catkin_ws/src/rrt_star_planner
+	url = git@github.com:usc-robosub/rrt_star_planner.git
