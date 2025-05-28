@@ -2,7 +2,7 @@
 
 ## User Guide
 
-Start up docker contianer: ```docker compose up [-d]```
+Start up docker container: ```docker compose up [-d]```
 
 - ```-d``` flag runs container in detached mode
 
