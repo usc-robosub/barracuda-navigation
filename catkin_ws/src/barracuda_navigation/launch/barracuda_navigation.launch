@@ -1,3 +1,4 @@
 <launch> 
     <group ns="barracuda">
+    </group>
 </launch>
