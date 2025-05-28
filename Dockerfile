@@ -7,7 +7,7 @@ COPY . /opt/barracuda-navigation
 WORKDIR /opt
 
 # Install dependencies for the navigation and update other tools
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends\
     ros-noetic-pcl-ros \
     ros-noetic-pcl-conversions \
     ros-noetic-tf2-geometry-msgs \
