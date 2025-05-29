@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 source /opt/ros/noetic/setup.bash
 
 # Build & Source catkin_ws
