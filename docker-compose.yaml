@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     user: root
+    tty: true
     container_name: barracuda-navigation
     network_mode: host
     restart: on-failure
