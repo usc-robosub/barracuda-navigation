@@ -19,7 +19,7 @@ WORKDIR /opt
 # Build the ROS workspace
 RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && \
     cd /opt/barracuda-navigation/catkin_ws && \
-    catkin_make 
+    catkin_make" 
 
 WORKDIR /opt
 
