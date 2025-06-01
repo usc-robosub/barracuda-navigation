@@ -9,7 +9,6 @@ Start up docker container: ```docker compose up [-d]```
 Gracefully shutdown container & remove image:
 ```docker compose down --rmi local --remove-orphans```
 
-
 ### Service Interface
 
 The planner provides a ROS service for path planning:
@@ -18,15 +17,16 @@ The planner provides a ROS service for path planning:
 **Type**: `rrt_star_planner/PlanPath`
 
 **Request**:
-```
+
+```ros
 geometry_msgs/PoseStamped goal_pose
 ```
 
 **Response**:
-```
+
+```ros
 barracuda_msgs/Waypoints waypoints
 ```
-
 
 ### Topics
 
@@ -40,7 +40,7 @@ barracuda_msgs/Waypoints waypoints
 
 #### Published Topics
 
-- `/planned_path` (barracuda_msgs/Waypoints)
+- `/planned_path` ([barracuda_msgs/Waypoints](https://github.com/usc-robosub/barracuda_msgs/tree/9a9e5d4b5699a8350ef21475d475ea0b145be3cc))
   - The planned path as a series of waypoints
 
 - `/planned_path_viz` ([nav_msgs/Path](http://docs.ros.org/api/nav_msgs/html/msg/Path.html))
