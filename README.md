@@ -40,7 +40,7 @@ barracuda_msgs/Waypoints waypoints
 
 #### Published Topics
 
-- `/planned_path` ([barracuda_msgs/Waypoints](https://github.com/usc-robosub/barracuda_msgs/tree/9a9e5d4b5699a8350ef21475d475ea0b145be3cc))
+- `/planned_path` ([barracuda_msgs/Waypoints](https://github.com/usc-robosub/barracuda_msgs/tree/main))
   - The planned path as a series of waypoints
 
 - `/planned_path_viz` ([nav_msgs/Path](http://docs.ros.org/api/nav_msgs/html/msg/Path.html))
