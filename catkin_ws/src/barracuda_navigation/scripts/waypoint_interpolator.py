@@ -1,11 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import numpy as np
 from scipy.interpolate import CubicSpline
 from barracuda_msgs.msg import Waypoints
 from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped, Quaternion
+from geometry_msgs.msg import PoseStamped, Quaternion, Point
+from visualization_msgs.msg import Marker, MarkerArray
 from tf.transformations import quaternion_from_matrix
 import tf2_ros
 import tf2_geometry_msgs
@@ -22,8 +23,9 @@ class WaypointInterpolator:
         self.min_waypoints = rospy.get_param('~min_waypoints', 2)  # minimum waypoints for interpolation
         
         # Publishers and Subscribers
-        self.waypoints_sub = rospy.Subscriber('/rrt_waypoints', Waypoints, self.waypoints_callback)
-        self.path_pub = rospy.Publisher('/interpolated_path', Path, queue_size=1)
+        self.waypoints_sub = rospy.Subscriber('rrt_waypoints', Waypoints, self.waypoints_callback)
+        self.path_pub = rospy.Publisher('interpolated_path', Path, queue_size=1)
+        self.marker_pub = rospy.Publisher('interpolated_markers', MarkerArray, queue_size=1)
         
         # TF2 for transformations
         self.tf_buffer = tf2_ros.Buffer()
@@ -65,6 +67,10 @@ class WaypointInterpolator:
         # Publish as Path message
         path_msg = self.create_path_message(discrete_targets, msg.header)
         self.path_pub.publish(path_msg)
+
+        # Publish MarkerArray for visualization
+        markers = self.create_marker_array(discrete_targets, msg.header)
+        self.marker_pub.publish(markers)
         
         interpolation_type = "linear" if len(points) == 2 else "cubic spline"
         rospy.loginfo(f"Published {interpolation_type} interpolated path with {len(path_msg.poses)} poses")
@@ -253,6 +259,101 @@ class WaypointInterpolator:
             path.poses.append(pose)
             
         return path
+
+    def create_marker_array(self, targets, header):
+        """Create a MarkerArray to visualize the interpolated path."""
+        marker_array = MarkerArray()
+
+        # Clear previous markers
+        clear = Marker()
+        clear.header.frame_id = header.frame_id
+        clear.header.stamp = rospy.Time.now()
+        clear.action = Marker.DELETEALL
+        marker_array.markers.append(clear)
+
+        now = rospy.Time.now()
+        frame_id = header.frame_id
+
+        # Line strip for the full path
+        line = Marker()
+        line.header.frame_id = frame_id
+        line.header.stamp = now
+        line.ns = "interpolated_path"
+        line.id = 0
+        line.type = Marker.LINE_STRIP
+        line.action = Marker.ADD
+        line.pose.orientation.w = 1.0
+        line.scale.x = 0.05  # line width
+        line.color.r = 0.1
+        line.color.g = 0.7
+        line.color.b = 1.0
+        line.color.a = 0.9
+
+        for t in targets:
+            line.points.append(Point(x=float(t['position'][0]),
+                                     y=float(t['position'][1]),
+                                     z=float(t['position'][2])))
+
+        marker_array.markers.append(line)
+
+        # Discrete points along the path
+        pts = Marker()
+        pts.header.frame_id = frame_id
+        pts.header.stamp = now
+        pts.ns = "interpolated_points"
+        pts.id = 1
+        pts.type = Marker.SPHERE_LIST
+        pts.action = Marker.ADD
+        pts.pose.orientation.w = 1.0
+        pts.scale.x = 0.08
+        pts.scale.y = 0.08
+        pts.scale.z = 0.08
+        pts.color.r = 1.0
+        pts.color.g = 0.2
+        pts.color.b = 0.4
+        pts.color.a = 0.8
+
+        for t in targets:
+            pts.points.append(Point(x=float(t['position'][0]),
+                                    y=float(t['position'][1]),
+                                    z=float(t['position'][2])))
+
+        marker_array.markers.append(pts)
+
+        # Orientation arrows at intervals
+        if targets:
+            step = max(1, int(0.5 / max(self.output_dt, 1e-3)))  # arrow every ~0.5s
+            arrow_len = 0.3
+            arrow_id = 100
+            for i in range(0, len(targets), step):
+                t = targets[i]
+                start = np.array([t['position'][0], t['position'][1], t['position'][2]], dtype=float)
+                tangent = np.array(t['tangent'], dtype=float)
+                end = start + tangent * arrow_len
+
+                arrow = Marker()
+                arrow.header.frame_id = frame_id
+                arrow.header.stamp = now
+                arrow.ns = "interpolated_arrows"
+                arrow.id = arrow_id
+                arrow_id += 1
+                arrow.type = Marker.ARROW
+                arrow.action = Marker.ADD
+                arrow.scale.x = 0.03  # shaft diameter
+                arrow.scale.y = 0.06  # head diameter
+                arrow.scale.z = 0.08  # head length
+                arrow.color.r = 0.0
+                arrow.color.g = 0.9
+                arrow.color.b = 0.2
+                arrow.color.a = 0.9
+                arrow.points = [
+                    Point(x=float(start[0]), y=float(start[1]), z=float(start[2])),
+                    Point(x=float(end[0]), y=float(end[1]), z=float(end[2]))
+                ]
+
+                marker_array.markers.append(arrow)
+
+        return marker_array
         
 def main():
     try:
