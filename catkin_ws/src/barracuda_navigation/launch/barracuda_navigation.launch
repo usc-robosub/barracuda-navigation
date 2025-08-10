@@ -21,5 +21,17 @@
         <remap from="robot_pose" to="/robot/pose" />
         <remap from="obstacle_pointcloud" to="/mapping/pointcloud" />
       </node>
+
+      <!-- LQR target odometry node -->
+      <node name="target_odometry_publisher" pkg="barracuda_navigation" type="target_odometry_publisher.py" output="screen">
+        <param name="path_topic" value="interpolated_path" />
+        <param name="odom_topic" value="odometry/filtered/global" />
+        <param name="target_topic" value="target_odometry" />
+        <param name="desired_speed" value="0.8" />
+        <param name="lookahead_dist" value="1.5" />
+        <param name="max_lookahead_dist" value="3.0" />
+        <param name="max_yaw_rate" value="0.8" />
+        <param name="publish_rate" value="30.0" />
+      </node>
     </group>
 </launch>

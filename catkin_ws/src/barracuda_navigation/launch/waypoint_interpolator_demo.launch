@@ -1,0 +1,32 @@
+<launch>
+  <group ns="barracuda">
+    <!-- Interpolator node -->
+    <node name="waypoint_interpolator" pkg="barracuda_navigation" type="waypoint_interpolator.py" output="screen">
+      <!-- Optional tuning params -->
+      <!-- <param name="velocity" value="1.0" /> -->
+      <!-- <param name="max_speed" value="2.0" /> -->
+      <!-- <param name="base_dt" value="0.1" /> -->
+      <!-- <param name="output_dt" value="0.02" /> -->
+    </node>
+
+    <!-- Sample waypoints publisher -->
+    <node name="waypoint_test_publisher" pkg="barracuda_navigation" type="waypoint_test_publisher.py" output="screen">
+      <param name="frame_id" value="map" />
+      <param name="topic" value="rrt_waypoints" />
+      <param name="repeat" value="true" />
+      <param name="rate" value="0.5" />
+    </node>
+
+    <!-- LQR target odometry node -->
+    <node name="target_odometry_publisher" pkg="barracuda_navigation" type="target_odometry_publisher.py" output="screen">
+      <param name="path_topic" value="interpolated_path" />
+      <param name="odom_topic" value="odometry/filtered/global" />
+      <param name="target_topic" value="target_odometry" />
+      <param name="desired_speed" value="0.8" />
+      <param name="lookahead_dist" value="0.5" />
+      <param name="max_lookahead_dist" value="3.0" />
+      <param name="max_yaw_rate" value="1.0" />
+      <param name="publish_rate" value="30.0" />
+    </node>
+  </group>
+</launch>

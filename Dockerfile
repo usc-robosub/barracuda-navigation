@@ -8,6 +8,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     ros-noetic-pcl-conversions \
     ros-noetic-tf2-geometry-msgs \
     ros-noetic-visualization-msgs \
+    python3-scipy \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -19,7 +20,7 @@ WORKDIR /opt
 # Build the ROS workspace
 RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && \
     cd /opt/barracuda-navigation/catkin_ws && \
-    catkin_make" 
+    catkin_make"
 
 WORKDIR /opt
 
