@@ -28,6 +28,8 @@ class LQRTargetOdometry:
         self.z_gain = rospy.get_param('~z_gain', 0.8)  # simple P for depth tracking
         self.max_climb_rate = rospy.get_param('~max_climb_rate', 0.5)  # m/s
         self.publish_rate = rospy.get_param('~publish_rate', 30.0)
+        self.hold_at_end = rospy.get_param('~hold_at_end', True)
+        self.hold_distance = rospy.get_param('~hold_distance', 0.3)  # m
 
         # Subscriptions and publishers
         self.path_sub = rospy.Subscriber(self.path_topic, Path, self.path_cb, queue_size=1)
@@ -89,7 +91,8 @@ class LQRTargetOdometry:
         # Search in a window ahead of last_progress_idx to avoid oscillations
         start = max(0, self.last_progress_idx - 5)
         end = len(self.path_positions)
-        dists = [np.linalg.norm(self.robot_pos[:2] - np.array(self.path_positions[i][:2]))
+        # Use full 3D distance to better handle vertical paths
+        dists = [np.linalg.norm(self.robot_pos - np.array(self.path_positions[i]))
                  for i in range(start, end)]
         local_idx = int(np.argmin(dists))
         idx = start + local_idx
@@ -102,7 +105,11 @@ class LQRTargetOdometry:
         if idx_near is None:
             return None
         s0 = self.cum_s[idx_near]
+        s_end = self.cum_s[-1]
         desired_la = np.clip(self.lookahead_dist, 0.0, self.max_lookahead_dist)
+        # If end is within lookahead window, target the final waypoint
+        if (s_end - s0) <= desired_la:
+            return len(self.cum_s) - 1
         target_idx = idx_near
         for i in range(idx_near, len(self.cum_s)):
             if self.cum_s[i] - s0 >= desired_la:
@@ -138,11 +145,25 @@ class LQRTargetOdometry:
             else:
                 tangent = np.array([np.cos(yaw_tgt), np.sin(yaw_tgt), 0.0])
         norm = np.linalg.norm(tangent)
+        t_hat = None
         if norm < 1e-6:
-            vx, vy, vz = 0.0, 0.0, 0.0
+            # Fallback: point from robot toward target if tangent is degenerate
+            delta = np.array(p_tgt) - self.robot_pos
+            n2 = np.linalg.norm(delta)
+            if n2 > 1e-6:
+                t_hat = delta / n2
+            else:
+                t_hat = np.array([np.cos(yaw_tgt), np.sin(yaw_tgt), 0.0])
         else:
             t_hat = tangent / norm
-            vx, vy, vz = (v * float(t_hat[0]), v * float(t_hat[1]), v * float(t_hat[2]))
+
+        vx, vy, vz = (v * float(t_hat[0]), v * float(t_hat[1]), v * float(t_hat[2]))
+
+        # Hold position at the final waypoint if close enough
+        if self.hold_at_end and idx_tgt == (len(self.path_positions) - 1):
+            dist_to_end = float(np.linalg.norm(self.robot_pos - np.array(p_tgt)))
+            if dist_to_end <= float(self.hold_distance):
+                vx, vy, vz = 0.0, 0.0, 0.0
 
         # Publish target odometry
         odom = Odometry()
@@ -153,7 +174,11 @@ class LQRTargetOdometry:
         odom.pose.pose.position.x = float(p_tgt[0])
         odom.pose.pose.position.y = float(p_tgt[1])
         odom.pose.pose.position.z = float(p_tgt[2])
-        q = quaternion_from_euler(0.0, 0.0, yaw_tgt)
+        # Orient along the 3D path tangent: roll=0, pitch from vertical, yaw from XY
+        yaw = float(np.arctan2(t_hat[1], t_hat[0]))
+        xy_norm = float(np.sqrt(t_hat[0]**2 + t_hat[1]**2))
+        pitch = float(np.arctan2(t_hat[2], xy_norm))
+        q = quaternion_from_euler(0.0, pitch, yaw)
         odom.pose.pose.orientation = Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
 
         odom.twist.twist.linear.x = float(vx)

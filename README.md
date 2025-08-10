@@ -117,14 +117,16 @@ The `target_odometry_publisher` node converts the `interpolated_path` into a con
 | `~lookahead_dist` | double | `1.5` | Lookahead distance along path (m) |
 | `~max_lookahead_dist` | double | `3.0` | Cap for lookahead distance (m) |
 | `~publish_rate` | double | `30.0` | Publishing rate (Hz) |
+| `~hold_at_end` | bool | `true` | Hold final waypoint; publish zero linear velocity within `~hold_distance` |
+| `~hold_distance` | double | `0.3` | Distance threshold to trigger final hold (m) |
 
 #### Behavior
 
 1. Finds the nearest path index to the current position and enforces forward progress (no backtracking).
 2. Chooses a target index where the along-path distance from the nearest index ≥ `lookahead_dist` (capped by `max_lookahead_dist`).
 3. Publishes:
-   - Pose: position and yaw from the target path pose.
-   - Twist (linear): constant speed along the local 3D path tangent (vx, vy, vz).
+   - Pose: position with orientation aligned to the 3D path tangent (roll=0, pitch from slope, yaw from XY).
+   - Twist (linear): constant speed along the local 3D path tangent (vx, vy, vz); zeroed when holding at the final waypoint.
    - Twist (angular): zeros (attitude control handled by your controller).
 
 #### Launch
