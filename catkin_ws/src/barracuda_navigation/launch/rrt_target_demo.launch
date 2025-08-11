@@ -1,0 +1,50 @@
+<launch>
+  <group ns="barracuda">
+    <!-- Dummy collision checker (always returns false) -->
+    <node name="no_collision_server" pkg="barracuda_navigation" type="no_collision_server.py" output="screen">
+      <param name="service" value="check_collision" />
+    </node>
+
+    <!-- RRT* planner node -->
+    <node name="rrt_star_planner" pkg="rrt_star_planner" type="rrt_star_planner_node" output="screen">
+      <!-- Basic parameters -->
+      <param name="max_step_size" value="0.5" />
+      <param name="goal_tolerance" value="0.3" />
+      <param name="robot_radius" value="0.5" />
+      <param name="max_iterations" value="4000" />
+      <param name="rewire_radius" value="1.0" />
+      <param name="goal_bias_probability" value="0.1" />
+
+      <!-- Sampling bounds (meters) -->
+      <param name="x_min" value="-10.0" />
+      <param name="x_max" value="10.0" />
+      <param name="y_min" value="-10.0" />
+      <param name="y_max" value="10.0" />
+      <param name="z_min" value="0.0" />
+      <param name="z_max" value="5.0" />
+
+      <!-- Collision service (served above) -->
+      <param name="check_collision_service" value="check_collision" />
+    </node>
+
+    <!-- Optional: interpolate waypoints into a dense path -->
+    <node name="waypoint_interpolator" pkg="barracuda_navigation" type="waypoint_interpolator.py" output="screen" />
+
+    <!-- Publish start pose and request a plan to the goal -->
+    <node name="publish_target_point" pkg="barracuda_navigation" type="publish_target_point.py" output="screen">
+      <param name="frame_id" value="map" />
+      <param name="publish_pose" value="true" />
+      <param name="pose_topic" value="robot_pose" />
+      <param name="start_x" value="0.0" />
+      <param name="start_y" value="0.0" />
+      <param name="start_z" value="0.5" />
+
+      <!-- Target point -->
+      <param name="goal_x" value="5.0" />
+      <param name="goal_y" value="3.0" />
+      <param name="goal_z" value="1.0" />
+      <param name="plan_service" value="plan_path" />
+    </node>
+  </group>
+</launch>
+
